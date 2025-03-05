@@ -18,7 +18,6 @@ class Faker_Provider extends Base {
 	 * Compile a set of blocks.
 	 *
 	 * @param array $blocks Blocks to compile.
-	 * @return string
 	 */
 	public static function blocks( array $blocks ): string {
 		return implode( "\n\n", $blocks );
@@ -27,13 +26,18 @@ class Faker_Provider extends Base {
 	/**
 	 * Build a heading block.
 	 *
-	 * @param int $level Heading level.
-	 * @return string
+	 * @param string|int|null $text Heading text.
+	 * @param int             $level Heading level.
 	 */
-	public static function heading_block( int $level = 2 ): string {
+	public static function heading_block( string|null|int $text = null, int $level = 2 ): string {
+		if ( is_int( $text ) ) {
+			$level = $text;
+			$text  = null;
+		}
+
 		return static::block(
 			'heading',
-			sprintf( '<h%d>%s</h%d>', $level, Lorem::sentence(), $level ),
+			sprintf( '<h%d>%s</h%d>', $level, $text ?: Lorem::sentence(), $level ),
 			[
 				'level' => $level,
 			],
@@ -43,13 +47,18 @@ class Faker_Provider extends Base {
 	/**
 	 * Build a paragraph block.
 	 *
-	 * @param int $sentences Number of sentences in the block.
-	 * @return string
+	 * @param string|int|null $text Text for the block.
+	 * @param int             $sentences Number of sentences in the block.
 	 */
-	public static function paragraph_block( int $sentences = 3 ): string {
+	public static function paragraph_block( string|null|int $text = null, int $sentences = 3 ): string {
+		if ( is_int( $text ) ) {
+			$sentences = $text;
+			$text      = null;
+		}
+
 		return static::block(
 			'paragraph',
-			sprintf( '<p>%s</p>', Lorem::sentences( $sentences, true ) )
+			sprintf( '<p>%s</p>', $text ?: Lorem::sentences( $sentences, true ) )
 		);
 	}
 
@@ -70,12 +79,28 @@ class Faker_Provider extends Base {
 	}
 
 	/**
+	 * Build an image block.
+	 *
+	 * @param string|null $url Image URL.
+	 * @param string|null $alt Image alt text.
+	 * @param array       $attributes Additional attributes for the block.
+	 */
+	public function image_block( ?string $url = null, ?string $alt = null, array $attributes = [] ) {
+		$image = sprintf(
+			'<figure class="wp-block-image"><img src="%s"%s/></figure>',
+			$url ?? 'https://picsum.photos/' . wp_rand( 100, 1000 ) . '/' . wp_rand( 100, 1000 ),
+			$alt ? ' alt="' . esc_attr( $alt ) . '"' : '',
+		);
+
+		return static::block( 'image', $image, $attributes );
+	}
+
+	/**
 	 * Build a block for Gutenberg.
 	 *
 	 * @param string $block_name Block name.
 	 * @param string $content Content for the block.
 	 * @param array  $attributes Attributes for the block.
-	 * @return string
 	 */
 	public static function block( string $block_name, string $content = '', array $attributes = [] ): string {
 		// Add a newline before and after the content.
